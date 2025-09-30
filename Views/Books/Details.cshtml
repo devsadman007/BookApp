@@ -1,0 +1,10 @@
+﻿@model BookApp.Models.Book
+
+<h2>Book Details</h2>
+
+<p><strong>Title:</strong> @Model.Title</p>
+<p><strong>Author:</strong> @Model.Author</p>
+<p><strong>Price:</strong> @Model.Price</p>
+
+<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+<a asp-action="Index" class="btn btn-secondary">Back</a>
