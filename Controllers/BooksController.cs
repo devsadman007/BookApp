@@ -47,7 +47,6 @@ namespace BookApp.Controllers
         // GET: Books/Details/5
         public IActionResult Details(int id)
         {
-
             try
             {
                 var book = _books.FirstOrDefault(b => b.Id == id);
@@ -71,7 +70,10 @@ namespace BookApp.Controllers
         }
 
         // GET: Books/Create
-        public IActionResult Create() => View();
+        public IActionResult Create()
+        {
+            return View();
+        }
 
         // POST: Books/Create
         [HttpPost]
@@ -84,7 +86,7 @@ namespace BookApp.Controllers
                 book.Id = _books.Max(b => b.Id) + 1;
                 _books.Add(book);
 
-                TempData["Success"] = "Book added successfully!";
+                TempData["Success"] = "Book Added Successfully!";
                 return RedirectToAction("Index");
             }
             catch (InvalidBookDataException ex)
@@ -106,28 +108,30 @@ namespace BookApp.Controllers
         }
 
         // GET: Books/Edit/5
-        public IActionResult Edit(int? id)
+        public IActionResult Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+
 
             try
             {
                 var book = _books.FirstOrDefault(b => b.Id == id);
                 if (book == null)
-                {
-                    return NotFound();
-                }
+                    throw new BookNotFoundException(id);
+
 
                 return View(book);
+            }
+            catch (BookNotFoundException ex) 
+            {
+                _logger.LogError(ex, "Error loading book for edit");
+                TempData["Error"] = $"Unable to Edit book data with ID {id}.";
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading book for edit");
                 TempData["Error"] = "Unable to load book for editing.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index");
             }
         }
 
@@ -136,29 +140,37 @@ namespace BookApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Book book)
         {
-            if (id != book.Id) {
-                return NotFound();
-            }
-            
-            if (!ModelState.IsValid)
-            {
-                return View(book);
-            }
 
             try
             {
-                var existing = _books.FirstOrDefault(b => b.Id == id);
+                if (id != book.Id)
+                    throw new BookNotFoundException(id);
+
+                if (!ModelState.IsValid)
+                    throw new InvalidBookDataException("Book data is invalid for update.");
+
+                var existing = _books.FirstOrDefault(b => b.Id == book.Id);
                 if (existing == null)
-                {
-                    return NotFound();
-                }
+                    throw new BookNotFoundException(book.Id);
 
                 existing.Title = book.Title;
                 existing.Author = book.Author;
                 existing.Price = book.Price;
-                TempData["Success"] = "Book updated successfully!";
 
-                return RedirectToAction(nameof(Index));
+                TempData["Success"] = "Book Updated successfully!";
+                return RedirectToAction("Index");
+            }
+            catch(BookNotFoundException ex)
+            {
+                _logger.LogError(ex, "Edit (POST) error");
+                TempData["Error"] = "Could not update book.";
+                return View(book);
+            }
+            catch (InvalidBookDataException ex)
+            {
+                _logger.LogError(ex, "Validation error in Edit");
+                TempData["Error"] = "Invalid Book Data for Update";
+                return View(book);
             }
             catch (Exception ex)
             {
@@ -176,22 +188,23 @@ namespace BookApp.Controllers
             try
             {
                 var book = _books.FirstOrDefault(b => b.Id == id);
-                if (book != null)
-                {
-                    _books.Remove(book);
-                    TempData["Success"] = "Book removed successfully!";
-                }
-                else
-                {
-                    TempData["Error"] = "Book not found.";
-                }
-                return RedirectToAction(nameof(Index));
+                if (book == null)
+                    throw new BookNotFoundException(id);
+                _books.Remove(book);
+                TempData["Success"] = "Book Deleted successfully!";
+                return RedirectToAction("Index");
+            }
+            catch (BookNotFoundException ex)
+            {
+                _logger.LogError(ex, "Delete Confirmed Error");
+                TempData["Error"] = "Could not delete book.";
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting book");
                 TempData["Error"] = "Could not delete book.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index");
             }
         }
 
