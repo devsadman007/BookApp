@@ -1,4 +1,6 @@
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddConsole();     // logs to console
+builder.Logging.AddDebug();       // logs to Visual Studio debug output
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
