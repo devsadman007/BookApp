@@ -4,6 +4,7 @@ namespace BookApp.Models
 {
     public class Book
     {
+        [Key]
         public int Id { get; set; }
 
         [Required, MaxLength(100)]

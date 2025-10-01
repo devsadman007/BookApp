@@ -10,8 +10,8 @@ namespace BookApp.Controllers
         //private static List<Book> _books = null; //this is for null exception test
         private static List<Book> _books = new List<Book>
         {
-            new Book { Id = 1, Title = "ASP.NET Core Basics", Author = "John Doe", Price = 200 },
-            new Book { Id = 2, Title = "C# Fundamentals", Author = "Jane Smith", Price = 300 }
+            new Book { Id = 1, Title = "ASP.NET Core Basics", Author = "John Doe", Price = 200.00m },
+            new Book { Id = 2, Title = "C# Fundamentals", Author = "Jane Smith", Price = 300.00m }
         };
 
         private readonly ILogger<BooksController> _logger;
@@ -21,7 +21,7 @@ namespace BookApp.Controllers
             _logger = logger;
         }
 
-        // GET: Books
+        // Get all books in table
         public IActionResult Index()
         {
             try
@@ -44,7 +44,7 @@ namespace BookApp.Controllers
             }
         }
 
-        // GET: Books/Details/5
+        // Book Details 
         public IActionResult Details(int id)
         {
             try
@@ -69,13 +69,13 @@ namespace BookApp.Controllers
             }
         }
 
-        // GET: Books/Create
+        // Craete View For Book
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Books/Create
+        // Insert
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Book book)
@@ -107,7 +107,7 @@ namespace BookApp.Controllers
         
         }
 
-        // GET: Books/Edit/5
+        // View for Edit Book Data
         public IActionResult Edit(int id)
         {
 
@@ -135,7 +135,7 @@ namespace BookApp.Controllers
             }
         }
 
-        // POST: Books/Edit/5
+        // Update
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Book book)
@@ -180,9 +180,7 @@ namespace BookApp.Controllers
             }
         }
 
-        // POST: Books/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // fetch id for delete
         public IActionResult Delete(int id)
         {
             try
@@ -190,23 +188,53 @@ namespace BookApp.Controllers
                 var book = _books.FirstOrDefault(b => b.Id == id);
                 if (book == null)
                     throw new BookNotFoundException(id);
-                _books.Remove(book);
-                TempData["Success"] = "Book Deleted successfully!";
-                return RedirectToAction("Index");
+
+                return View(book);
             }
             catch (BookNotFoundException ex)
             {
-                _logger.LogError(ex, "Delete Confirmed Error");
-                TempData["Error"] = "Could not delete book.";
-                return RedirectToAction("Index");
+                _logger.LogError(ex, "Delete (GET) error");
+                TempData["Error"] = $"Book with ID {id} not found for deleting";
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting book");
-                TempData["Error"] = "Could not delete book.";
-                return RedirectToAction("Index");
+                _logger.LogError(ex, "Unexpected error in Delete GET");
+                TempData["Error"] = "Something went wrong.";
+                return RedirectToAction(nameof(Index));
             }
         }
+
+        // Delete confirmed
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteConfirmed(int id)
+        {
+            try
+            {
+                var book = _books.FirstOrDefault(b => b.Id == id);
+                if (book == null)
+                    throw new BookNotFoundException(id);
+
+                _books.Remove(book);
+
+                TempData["Success"] = "Book Deleted successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (BookNotFoundException ex)
+            {
+                _logger.LogError(ex, "Delete (POST) error");
+                TempData["Error"] = $"Book with ID {id} not found.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in Delete POST");
+                TempData["Error"] = "Something went wrong while deleting.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
 
     }
 }
