@@ -47,3 +47,7 @@
 # Cant Insert Book with Invalid Data
 
 ![image_alt](https://github.com/devsadman007/BookApp/blob/d93989dd3ad903b6c71cffa9b3e065452d0beb80/Screenshot_11.png)
+
+# Log exceptions to the console for debugging purposes.
+
+![image_alt](https://github.com/devsadman007/BookApp/blob/3ae35ac92bfa671b9da26b501cb3991a9702648b/Screenshot_12.png)
