@@ -1,11 +1,13 @@
-﻿using BookApp.Models;
+﻿using BookApp.Exceptions;
+using BookApp.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookApp.Controllers
 {
     public class BooksController : Controller
     {
-        // Fake DB (static list)
+        //  DB (static list)
+        //private static List<Book> _books = null; //this is for null exception test
         private static List<Book> _books = new List<Book>
         {
             new Book { Id = 1, Title = "ASP.NET Core Basics", Author = "John Doe", Price = 200 },
@@ -24,7 +26,15 @@ namespace BookApp.Controllers
         {
             try
             {
+                if (_books == null)
+                    throw new BookDatabaseException("Failed to load book list from database.");
                 return View(_books);
+            }
+            catch (BookDatabaseException ex)
+            {
+                _logger.LogError(ex, "Database error in Index:");
+                TempData["Error"] = "Book list could not be loaded. Try again later.";
+                return View(new List<Book>());
             }
             catch (Exception ex)
             {
@@ -35,22 +45,28 @@ namespace BookApp.Controllers
         }
 
         // GET: Books/Details/5
-        public IActionResult Details(int? id)
+        public IActionResult Details(int id)
         {
-            if (id == null) return NotFound();
 
             try
             {
                 var book = _books.FirstOrDefault(b => b.Id == id);
-                if (book == null) return NotFound();
+                if (book == null)
+                    throw new BookNotFoundException(id);
 
                 return View(book);
+            }
+            catch(BookNotFoundException ex)
+            {
+                _logger.LogError(ex, "Error fetching details");
+                TempData["Error"] = $"Unable to load details for book with ID {id}.";
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching details");
                 TempData["Error"] = "Unable to load book details.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index");
             }
         }
 
@@ -62,32 +78,48 @@ namespace BookApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Book book)
         {
-            if (!ModelState.IsValid) return View(book);
-
-            try
-            {
-                book.Id = _books.Any() ? _books.Max(b => b.Id) + 1 : 1;
+            try { 
+                if (!ModelState.IsValid)
+                    throw new InvalidBookDataException("Book data is not valid.");
+                book.Id = _books.Max(b => b.Id) + 1;
                 _books.Add(book);
-                TempData["Success"] = "Book created successfully!";
-                return RedirectToAction(nameof(Index));
+
+                TempData["Success"] = "Book added successfully!";
+                return RedirectToAction("Index");
             }
-            catch (Exception ex)
+            catch (InvalidBookDataException ex)
             {
+                _logger.LogError(ex, "Error creating book with Title '{Title}' and Author '{Author}'", book.Title, book.Author);
+
+                TempData["Error"] = "Could not create book. The data provided is invalid.";
+
+                return View(book);
+            }
+            catch (Exception ex) {
+
                 _logger.LogError(ex, "Error creating book");
                 TempData["Error"] = "Could not create book.";
                 return View(book);
+
             }
+        
         }
 
         // GET: Books/Edit/5
         public IActionResult Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+            {
+                return NotFound();
+            }
 
             try
             {
                 var book = _books.FirstOrDefault(b => b.Id == id);
-                if (book == null) return NotFound();
+                if (book == null)
+                {
+                    return NotFound();
+                }
 
                 return View(book);
             }
@@ -104,13 +136,22 @@ namespace BookApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Book book)
         {
-            if (id != book.Id) return NotFound();
-            if (!ModelState.IsValid) return View(book);
+            if (id != book.Id) {
+                return NotFound();
+            }
+            
+            if (!ModelState.IsValid)
+            {
+                return View(book);
+            }
 
             try
             {
                 var existing = _books.FirstOrDefault(b => b.Id == id);
-                if (existing == null) return NotFound();
+                if (existing == null)
+                {
+                    return NotFound();
+                }
 
                 existing.Title = book.Title;
                 existing.Author = book.Author;

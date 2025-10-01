@@ -1,8 +1,12 @@
 ﻿@model BookApp.Models.Book
 
-<h2>Create Book</h2>
 
-<form asp-action="Create" method="post">
+<div class="card w-50 mx-auto mt-5 shadow-sm">
+    <div class="card-header">
+        Create a New Book
+    </div>
+    <div class="card-body">
+        <form asp-action="Create" method="post">
     <div class="form-group">
         <label asp-for="Title"></label>
         <input asp-for="Title" class="form-control" />
@@ -18,6 +22,11 @@
         <input asp-for="Price" class="form-control" />
         <span asp-validation-for="Price" class="text-danger"></span>
     </div>
+    <br />
     <button type="submit" class="btn btn-success">Save</button>
     <a asp-action="Index" class="btn btn-secondary">Back</a>
 </form>
+    </div>
+</div>
+
+
