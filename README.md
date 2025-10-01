@@ -1,4 +1,8 @@
 # Welcome to BookApp
+# Here, I try to implement all the criteria given in the assignment.
+1. Project Setup
+2. CRUD Operations
+3. Error Handleing (With Custom Try-Catch)
 
 # Book List
 
